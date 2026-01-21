@@ -1,6 +1,6 @@
 #![no_std]
 
-mod instruction;
+pub mod instruction;
 pub mod flags;
 
 use instruction::Opcode;
@@ -14,8 +14,12 @@ pub trait Host {
 pub struct VM<'a, H: Host> {
     bytecode: &'a [u8],
     pc: usize,
+
     stack: [i32; 32],
     sp: usize,
+
+    memory: [i32; 32],
+
     flags: VmFlags,
     host: H,
 }
@@ -27,6 +31,7 @@ impl<'a, H: Host> VM<'a, H> {
             pc: 0,
             stack: [0; 32],
             sp: 0,
+            memory: [0; 32],
             flags: VmFlags::new(),
             host,
         }
@@ -90,11 +95,36 @@ impl<'a, H: Host> VM<'a, H> {
                     self.push(a - b);
                 }
 
+                Opcode::Load => {
+                    let idx = self.fetch() as usize;
+
+                    if idx >= self.memory.len() {
+                        self.flags.memory_oob = true;
+                        self.flags.halted = true;
+                        break;
+                    }
+
+                    let value = self.memory[idx];
+                    self.push(value);
+                }
+
+                Opcode::Store => {
+                    let idx = self.fetch() as usize;
+
+                    if idx >= self.memory.len() {
+                        self.flags.memory_oob = true;
+                        self.flags.halted = true;
+                        break;
+                    }
+
+                    let value = self.pop();
+                    self.memory[idx] = value;
+                }
+
                 Opcode::CallNative => {
                     let id = self.fetch();
                     let arg = self.pop();
-                    // not implemented yet
-                    let _ = (id, arg);
+                    let _ = (id, arg); // not implemented yet
                 }
 
                 Opcode::Halt => {

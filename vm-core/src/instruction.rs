@@ -4,7 +4,11 @@ pub enum Opcode {
     Push        = 0x01,
     Add         = 0x02,
     Sub         = 0x03,
-    CallNative  = 0x40,
+
+    Load        = 0x20,
+    Store       = 0x21,
+
+    CallNative  = 0x50,
     Halt        = 0xFF,
 }
 
@@ -14,7 +18,9 @@ impl Opcode {
             0x01 => Some(Opcode::Push),
             0x02 => Some(Opcode::Add),
             0x03 => Some(Opcode::Sub),
-            0x40 => Some(Opcode::CallNative),
+            0x20 => Some(Opcode::Load),
+            0x21 => Some(Opcode::Store),
+            0x50 => Some(Opcode::CallNative),
             0xFF => Some(Opcode::Halt),
             _ => None,
         }

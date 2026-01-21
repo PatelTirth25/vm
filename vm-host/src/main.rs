@@ -29,7 +29,21 @@ impl Host for HostStd {
 }
 
 fn main() {
-    let bytecode = [0x01, 10, 0x01, 20, 0x02, 0xFF];
+    // Program:
+    // x = 10
+    // x = x + 1
+    // print(x)
+
+    let bytecode = [
+        0x01, 10,    // PUSH 10
+        0x21, 0,     // STORE 0
+        0x20, 0,     // LOAD 0
+        0x01, 1,     // PUSH 1
+        0x02,        // ADD
+        0x21, 0,     // STORE 0
+        0x20, 0,     // LOAD 0
+        0xFF,        // HALT
+    ];
 
     let mut vm = VM::new(&bytecode, HostStd);
     vm.run();
