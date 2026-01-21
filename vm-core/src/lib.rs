@@ -1,10 +1,10 @@
 #![no_std]
 
-pub mod instruction;
 pub mod flags;
+pub mod instruction;
 
-use instruction::Opcode;
 pub use flags::VmFlags;
+use instruction::Opcode;
 
 pub trait Host {
     fn print(&self, value: i32);
