@@ -69,6 +69,15 @@ impl<'a, H: Host> VM<'a, H> {
         b
     }
 
+    fn jump_to(&mut self, addr: usize) {
+        if addr >= self.bytecode.len() {
+            self.flags.invalid_jump = true;
+            self.flags.halted = true;
+            return;
+        }
+        self.pc = addr;
+    }
+
     pub fn run(&mut self) {
         while !self.flags.halted {
             let byte = self.fetch();
@@ -119,6 +128,38 @@ impl<'a, H: Host> VM<'a, H> {
 
                     let value = self.pop();
                     self.memory[idx] = value;
+                }
+
+                Opcode::CmpEq => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    self.push((a == b) as i32);
+                }
+
+                Opcode::CmpLt => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    self.push((a < b) as i32);
+                }
+
+                Opcode::CmpGt => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    self.push((a > b) as i32);
+                }
+
+                Opcode::Jmp => {
+                    let addr = self.fetch() as usize;
+                    self.jump_to(addr);
+                }
+
+                Opcode::JmpIfFalse => {
+                    let addr = self.fetch() as usize;
+                    let cond = self.pop();
+
+                    if cond == 0 {
+                        self.jump_to(addr);
+                    }
                 }
 
                 Opcode::CallNative => {
