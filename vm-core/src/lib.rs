@@ -168,14 +168,15 @@ impl<'a, H: Host> VM<'a, H> {
                     let _ = (id, arg); // not implemented yet
                 }
 
+                Opcode::Print => {
+                    let v = self.pop();
+                    self.host.print(v);
+                }
+
                 Opcode::Halt => {
                     self.flags.halted = true;
                 }
             }
-        }
-
-        if self.sp > 0 {
-            self.host.print(self.stack[self.sp - 1]);
         }
 
         self.host.report_flags(self.flags);

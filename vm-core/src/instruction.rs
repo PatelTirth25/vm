@@ -16,6 +16,7 @@ pub enum Opcode {
     JmpIfFalse  = 0x41,
 
     CallNative  = 0x50,
+    Print       = 0x51,
     Halt        = 0xFF,
 }
 
@@ -33,6 +34,7 @@ impl Opcode {
             0x40 => Some(Opcode::Jmp),
             0x41 => Some(Opcode::JmpIfFalse),
             0x50 => Some(Opcode::CallNative),
+            0x51 => Some(Opcode::Print),
             0xFF => Some(Opcode::Halt),
             _ => None,
         }
