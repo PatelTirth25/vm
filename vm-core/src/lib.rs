@@ -22,6 +22,10 @@ pub struct VM<'a, H: Host> {
 
     flags: VmFlags,
     host: H,
+
+    call_stack: [usize; 32],
+    csp: usize,
+
 }
 
 impl<'a, H: Host> VM<'a, H> {
@@ -34,6 +38,8 @@ impl<'a, H: Host> VM<'a, H> {
             memory: [0; 32],
             flags: VmFlags::new(),
             host,
+            call_stack: [0;32],
+            csp: 0,
         }
     }
 
@@ -184,6 +190,44 @@ impl<'a, H: Host> VM<'a, H> {
                     let v = self.pop();
                     self.host.print(v);
                 }
+
+                Opcode::Call => {
+                    let addr = self.fetch() as usize;
+
+                    if addr >= self.bytecode.len() {
+                        self.flags.invalid_jump = true;
+                        self.flags.halted = true;
+                        break;
+                    }
+
+                    if self.csp >= self.call_stack.len() {
+                        self.flags.stack_overflow = true;
+                        self.flags.halted = true;
+                        break;
+                    }
+
+                    // Save return address
+                    self.call_stack[self.csp] = self.pc;
+                    self.csp += 1;
+
+                    // Jump to function
+                    self.pc = addr;
+                }
+
+
+                Opcode::Ret => {
+                    if self.csp == 0 {
+                        self.flags.stack_underflow = true;
+                        self.flags.halted = true;
+                        break;
+                    }
+
+                    self.csp -= 1;
+
+                    // Restore return address
+                    self.pc = self.call_stack[self.csp];
+                }
+
 
                 Opcode::Halt => {
                     self.flags.halted = true;
