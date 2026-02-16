@@ -18,6 +18,9 @@ pub enum Opcode {
     CallNative  = 0x50,
     Print       = 0x51,
     Halt        = 0xFF,
+
+    CmpLe       = 0x34,
+    CmpGe       = 0x35,
 }
 
 impl Opcode {
@@ -31,6 +34,8 @@ impl Opcode {
             0x30 => Some(Opcode::CmpEq),
             0x31 => Some(Opcode::CmpLt),
             0x32 => Some(Opcode::CmpGt),
+            0x34 => Some(Opcode::CmpLe),
+            0x35 => Some(Opcode::CmpGe),
             0x40 => Some(Opcode::Jmp),
             0x41 => Some(Opcode::JmpIfFalse),
             0x50 => Some(Opcode::CallNative),

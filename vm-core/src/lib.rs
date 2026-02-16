@@ -148,6 +148,18 @@ impl<'a, H: Host> VM<'a, H> {
                     self.push((a > b) as i32);
                 }
 
+                Opcode::CmpLe => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    self.push((a <= b) as i32);
+                }
+
+                Opcode::CmpGe => {
+                    let b = self.pop();
+                    let a = self.pop();
+                    self.push((a >= b) as i32);
+                }
+
                 Opcode::Jmp => {
                     let addr = self.fetch() as usize;
                     self.jump_to(addr);
