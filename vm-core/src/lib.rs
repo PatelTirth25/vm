@@ -8,6 +8,7 @@ use instruction::Opcode;
 
 pub trait Host {
     fn print(&self, value: i32);
+    fn native_call(&self, id: u8, arg: i32) -> i32;
     fn report_flags(&self, flags: VmFlags);
 }
 
@@ -25,7 +26,6 @@ pub struct VM<'a, H: Host> {
 
     call_stack: [usize; 32],
     csp: usize,
-
 }
 
 impl<'a, H: Host> VM<'a, H> {
@@ -38,7 +38,7 @@ impl<'a, H: Host> VM<'a, H> {
             memory: [0; 32],
             flags: VmFlags::new(),
             host,
-            call_stack: [0;32],
+            call_stack: [0; 32],
             csp: 0,
         }
     }
@@ -183,7 +183,8 @@ impl<'a, H: Host> VM<'a, H> {
                 Opcode::CallNative => {
                     let id = self.fetch();
                     let arg = self.pop();
-                    let _ = (id, arg); // not implemented yet
+                    let result = self.host.native_call(id, arg);
+                    self.push(result);
                 }
 
                 Opcode::Print => {
@@ -214,7 +215,6 @@ impl<'a, H: Host> VM<'a, H> {
                     self.pc = addr;
                 }
 
-
                 Opcode::Ret => {
                     if self.csp == 0 {
                         self.flags.stack_underflow = true;
@@ -227,7 +227,6 @@ impl<'a, H: Host> VM<'a, H> {
                     // Restore return address
                     self.pc = self.call_stack[self.csp];
                 }
-
 
                 Opcode::Halt => {
                     self.flags.halted = true;

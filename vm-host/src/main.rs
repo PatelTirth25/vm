@@ -11,6 +11,11 @@ impl Host for HostUart {
         // write to UART / RTT / semihosting
     }
 
+    fn native_call(&self, _id: u8, _arg: i32) -> i32 {
+        // native call implementation for UART
+        0
+    }
+
     fn report_flags(&self, flags: VmFlags) {
         if flags.any_error() {
             // report flags to UART / RTT / semihosting
@@ -21,6 +26,29 @@ impl Host for HostUart {
 impl Host for HostStd {
     fn print(&self, value: i32) {
         println!("VM OUTPUT = {}", value);
+    }
+
+    fn native_call(&self, id: u8, arg: i32) -> i32 {
+        match id {
+            0 => {
+                println!("NATIVE PRINT: {}", arg);
+                0
+            }
+            1 => {
+                let result = arg * 2;
+                println!("NATIVE DOUBLE: {} -> {}", arg, result);
+                result
+            }
+            2 => {
+                let result = arg * arg;
+                println!("NATIVE SQUARE: {} -> {}", arg, result);
+                result
+            }
+            _ => {
+                println!("Unknown native function id: {}", id);
+                0
+            }
+        }
     }
 
     fn report_flags(&self, flags: VmFlags) {
@@ -83,7 +111,7 @@ fn main() {
                     if trimmed.is_empty() {
                         return None;
                     }
-                    
+
                     // Parse as hex if it has 0x prefix, otherwise as decimal
                     if trimmed.starts_with("0x") {
                         let hex_str = trimmed.trim_start_matches("0x");

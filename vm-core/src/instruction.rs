@@ -1,30 +1,29 @@
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Opcode {
-    Push        = 0x01,
-    Add         = 0x02,
-    Sub         = 0x03,
+    Push = 0x01,
+    Add = 0x02,
+    Sub = 0x03,
 
-    Load        = 0x20,
-    Store       = 0x21,
+    Load = 0x20,
+    Store = 0x21,
 
-    CmpEq       = 0x30,
-    CmpLt       = 0x31,
-    CmpGt       = 0x32,
+    CmpEq = 0x30,
+    CmpLt = 0x31,
+    CmpGt = 0x32,
 
-    Jmp         = 0x40,
-    JmpIfFalse  = 0x41,
+    Jmp = 0x40,
+    JmpIfFalse = 0x41,
 
-    CallNative  = 0x50,
-    Print       = 0x51,
-    Halt        = 0xFF,
+    CallNative = 0x50,
+    Print = 0x51,
+    Halt = 0xFF,
 
-    CmpLe       = 0x34,
-    CmpGe       = 0x35,
+    CmpLe = 0x34,
+    CmpGe = 0x35,
 
-    Call        = 0x60,
-    Ret         = 0x61,
-
+    Call = 0x60,
+    Ret = 0x61,
 }
 
 impl Opcode {
