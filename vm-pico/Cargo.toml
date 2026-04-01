@@ -1,0 +1,21 @@
+[package]
+name = "vm-pico"
+edition = "2021"
+version = "0.1.0"
+
+[[bin]]
+name = "vm-pico"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+embedded-hal = "1.0"
+panic-halt = "0.2"
+rp2040-hal = { version = "0.11", features = ["critical-section-impl"] }
+rp2040-boot2 = "0.3"
+
+vm-core = { path = "../vm-core" }
+vm-native = { path = "../vm-native", default-features = false }

@@ -1,8 +1,11 @@
-use std::{env, fs};
+use std::{cell::RefCell, env, fs};
 
 use vm_core::{Host, VmFlags, VM};
+use vm_native::GpioController;
 
-struct HostStd;
+struct HostStd {
+    gpio: RefCell<GpioController>,
+}
 
 struct HostUart;
 
@@ -12,7 +15,6 @@ impl Host for HostUart {
     }
 
     fn native_call(&self, _id: u8, _arg: i32) -> i32 {
-        // native call implementation for UART
         0
     }
 
@@ -44,6 +46,26 @@ impl Host for HostStd {
                 println!("NATIVE SQUARE: {} -> {}", arg, result);
                 result
             }
+            10 => {
+                let pin = arg as u8;
+                let mut gpio = self.gpio.borrow_mut();
+                gpio.high(pin)
+            }
+            11 => {
+                let pin = arg as u8;
+                let mut gpio = self.gpio.borrow_mut();
+                gpio.low(pin)
+            }
+            12 => {
+                let pin = arg as u8;
+                let gpio = self.gpio.borrow();
+                gpio.read(pin)
+            }
+            13 => {
+                let pin = arg as u8;
+                let mut gpio = self.gpio.borrow_mut();
+                gpio.toggle(pin)
+            }
             _ => {
                 println!("Unknown native function id: {}", id);
                 0
@@ -59,51 +81,29 @@ impl Host for HostStd {
 }
 
 fn main() {
-    // Program:
-    // x = 10
-    // x = x + 1
-    // print(x)
-
-    // let bytecode = [
-    //     0x01, 10,    // PUSH 10
-    //     0x21, 0,     // STORE 0
-    //     0x20, 0,     // LOAD 0
-    //     0x01, 1,     // PUSH 1
-    //     0x02,        // ADD
-    //     0x21, 0,     // STORE 0
-    //     0x20, 0,     // LOAD 0
-    //     0xFF,        // HALT
-    // ];
-
     let args: Vec<String> = env::args().collect();
 
-    // Ensure a file path argument was provided.
     if args.len() < 2 {
         eprintln!("Usage: cargo run -- <file_path>");
         return;
     }
 
-    // The file path is the second argument (index 1).
     let file_path = &args[1];
 
     println!("Reading file: {}", file_path);
 
-    // Read the file's content into a string.
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
 
     println!("File contents:\n{}", contents);
 
-    // Parse the file content into bytecode
     let bytecode: Vec<u8> = contents
         .lines()
         .flat_map(|line| {
-            // Remove comments and trim whitespace
-            let cleaned = line.split(";").next().unwrap_or(line).trim();
+            let cleaned = line.split(';').next().unwrap_or(line).trim();
             if cleaned.is_empty() {
                 return Vec::new();
             }
 
-            // Split by comma and parse each hex value
             cleaned
                 .split(',')
                 .filter_map(|part| {
@@ -112,7 +112,6 @@ fn main() {
                         return None;
                     }
 
-                    // Parse as hex if it has 0x prefix, otherwise as decimal
                     if trimmed.starts_with("0x") {
                         let hex_str = trimmed.trim_start_matches("0x");
                         u8::from_str_radix(hex_str, 16).ok()
@@ -126,7 +125,10 @@ fn main() {
 
     println!("Parsed bytecode: {:?}", bytecode);
 
-    // Create and run the VM
-    let mut vm = VM::new(&bytecode, HostStd);
+    let host = HostStd {
+        gpio: RefCell::new(GpioController::new()),
+    };
+
+    let mut vm = VM::new(&bytecode, host);
     vm.run();
 }
