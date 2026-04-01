@@ -23,22 +23,16 @@ use vm_core::{Host, VmFlags, VM};
 use vm_native::GpioController;
 
 const LED_PIN: u8 = 2;
-const DEMO_PROGRAM: &[u8] = &[0x01, 0,
-0x21, 0,
-0x01, 2,
-0x21, 1,
-0x20, 0,
-0x20, 1,
-0x31,
-0x41, 27,
-0x20, 0,
-0x01, 1,
-0x02,
-0x21, 0,
-0x20, 0,
-0x51,
-0x40, 8,
-0xFF,
+const DEMO_PROGRAM: &[u8] = &[
+    0x01, LED_PIN, // PUSH 2 (LED pin = GPIO2)
+    0x50, 10, // CALL_NATIVE: LED ON (id=10)
+    0x01, 100, // PUSH 100ms delay
+    0x50, 20, // CALL_NATIVE: delay_ms (id=20)
+    0x01, LED_PIN, // PUSH 2 (LED pin)
+    0x50, 11, // CALL_NATIVE: LED OFF (id=11)
+    0x01, 100, // PUSH 100ms delay
+    0x50, 20,   // CALL_NATIVE: delay_ms (id=20)
+    0xFF, // HALT
 ];
 
 #[cfg(not(target_arch = "xtensa"))]
@@ -76,19 +70,20 @@ impl Host for Esp32Host {
 }
 
 #[cfg(target_arch = "xtensa")]
-struct Esp32XtensaHost<'led, 'pin> {
+struct Esp32XtensaHost<'led, 'pin, 'delay> {
     led: &'led RefCell<Output<'pin>>,
+    delay: &'delay Delay,
 }
 
 #[cfg(target_arch = "xtensa")]
-impl Host for Esp32XtensaHost<'_, '_> {
+impl Host for Esp32XtensaHost<'_, '_, '_> {
     fn print(&self, value: i32) {
         println!("VM OUTPUT = {}", value);
     }
 
     fn native_call(&self, id: u8, arg: i32) -> i32 {
         let pin = arg as u8;
-        if pin != LED_PIN {
+        if pin != LED_PIN && id != 20 {
             println!(
                 "Ignoring GPIO{} request; demo host only exposes GPIO{}",
                 pin, LED_PIN
@@ -98,20 +93,29 @@ impl Host for Esp32XtensaHost<'_, '_> {
 
         match id {
             10 => {
+                println!("[NATIVE] LED ON");
                 self.led.borrow_mut().set_high();
                 0
             }
             11 => {
+                println!("[NATIVE] LED OFF");
                 self.led.borrow_mut().set_low();
                 0
             }
             12 => self.led.borrow().is_set_high() as i32,
             13 => {
+                println!("[NATIVE] LED TOGGLE");
                 self.led.borrow_mut().toggle();
                 0
             }
+            20 => {
+                // delay_ms
+                println!("[NATIVE] delay {}ms", arg);
+                self.delay.delay_millis(arg as u32);
+                0
+            }
             _ => {
-                println!("Unknown native function id: {}", id);
+                println!("[NATIVE] Unknown id: {}", id);
                 0
             }
         }
@@ -130,12 +134,28 @@ fn run_program() -> ! {
     let led = RefCell::new(Output::new(peripherals.GPIO2, Level::Low));
     let delay = Delay::new();
 
-    println!("Running embedded bytecode demo on GPIO{}", LED_PIN);
+    println!("Running LED blink demo on GPIO{}", LED_PIN);
+
+    // Test LED manually first
+    println!("[TEST] LED ON");
+    led.borrow_mut().set_high();
+    delay.delay_millis(500);
+    println!("[TEST] LED OFF");
+    led.borrow_mut().set_low();
+    delay.delay_millis(500);
+    println!("[TEST] Manual blink done, starting VM...");
 
     loop {
-        let host = Esp32XtensaHost { led: &led };
-        let mut vm = VM::new(DEMO_PROGRAM, host);
-        vm.run();
+        println!("[VM] Starting bytecode...");
+        {
+            let host = Esp32XtensaHost {
+                led: &led,
+                delay: &delay,
+            };
+            let mut vm = VM::new(DEMO_PROGRAM, host);
+            vm.run();
+        }
+        println!("[VM] Bytecode done, waiting 500ms...");
         delay.delay_millis(500);
     }
 }
