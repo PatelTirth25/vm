@@ -1,6 +1,14 @@
 [workspace]
 resolver = "2"
-members = ["vm-core", "vm-host", "vm-native", "vm-pico", "vm-esp32"]
+members = [
+    "vm-core",
+    "vm-host",
+    "vm-native",
+    "vm-pico",
+    "vm-esp32",
+    "vm-host-bench",
+    "vm-esp32-bench",
+]
 default-members = ["vm-esp32"]
 
 [profile.dev]

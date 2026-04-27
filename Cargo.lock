@@ -1349,11 +1349,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "vm-esp32-bench"
+version = "0.1.0"
+dependencies = [
+ "esp-backtrace",
+ "esp-hal",
+ "esp-println",
+ "vm-core",
+]
+
+[[package]]
 name = "vm-host"
 version = "0.1.0"
 dependencies = [
  "vm-core",
  "vm-native",
+]
+
+[[package]]
+name = "vm-host-bench"
+version = "0.1.0"
+dependencies = [
+ "vm-core",
 ]
 
 [[package]]

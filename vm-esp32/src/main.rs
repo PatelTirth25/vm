@@ -22,13 +22,13 @@ use vm_core::{Host, VmFlags, VM};
 #[cfg(not(target_arch = "xtensa"))]
 use vm_native::GpioController;
 
-const LED_PIN: u8 = 2;
+const LED_PIN: u8 = 4; // Using GPIO4 for external LED
 const DEMO_PROGRAM: &[u8] = &[
-    0x01, LED_PIN, // PUSH 2 (LED pin = GPIO2)
+    0x01, LED_PIN, // PUSH 4 (LED pin = GPIO4)
     0x50, 10, // CALL_NATIVE: LED ON (id=10)
     0x01, 100, // PUSH 100ms delay
     0x50, 20, // CALL_NATIVE: delay_ms (id=20)
-    0x01, LED_PIN, // PUSH 2 (LED pin)
+    0x01, LED_PIN, // PUSH 4 (LED pin)
     0x50, 11, // CALL_NATIVE: LED OFF (id=11)
     0x01, 100, // PUSH 100ms delay
     0x50, 20,   // CALL_NATIVE: delay_ms (id=20)
@@ -131,10 +131,14 @@ impl Host for Esp32XtensaHost<'_, '_, '_> {
 #[cfg(target_arch = "xtensa")]
 fn run_program() -> ! {
     let peripherals = esp_hal::init(esp_hal::Config::default());
-    let led = RefCell::new(Output::new(peripherals.GPIO2, Level::Low));
+    let led = RefCell::new(Output::new(peripherals.GPIO4, Level::Low));
     let delay = Delay::new();
 
-    println!("Running LED blink demo on GPIO{}", LED_PIN);
+    println!("Running LED blink demo on external LED via GPIO{}", LED_PIN);
+    println!(
+        "Connect LED positive leg to GPIO{}, LED negative leg to GND",
+        LED_PIN
+    );
 
     // Test LED manually first
     println!("[TEST] LED ON");

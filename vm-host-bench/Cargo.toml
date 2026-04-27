@@ -1,0 +1,14 @@
+[package]
+name = "vm-host-bench"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "vm-host-bench"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+vm-core = { path = "../vm-core" }

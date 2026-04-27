@@ -1,0 +1,14 @@
+[build]
+target = "xtensa-esp32-none-elf"
+
+[target.xtensa-esp32-none-elf]
+linker = "C:/Users/jillf/.rustup/toolchains/esp/xtensa-esp-elf/bin/xtensa-esp32-elf-gcc.exe"
+rustflags = [
+    "-C",
+    "link-arg=-nostartfiles",
+    "-C",
+    "link-arg=-Wl,-Tvm-esp32/esp32-linkall.x",
+]
+
+[unstable]
+build-std = ["core", "alloc"]

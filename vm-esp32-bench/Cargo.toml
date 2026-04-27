@@ -1,0 +1,27 @@
+[package]
+name = "vm-esp32-bench"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "vm-esp32-bench"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+vm-core = { path = "../vm-core" }
+
+[target.'cfg(target_arch = "xtensa")'.dependencies]
+esp-backtrace = { version = "0.15", features = [
+    "esp32",
+    "panic-handler",
+    "exception-handler",
+    "println",
+] }
+esp-hal = { version = "0.23", features = ["esp32"] }
+esp-println = { version = "0.13", default-features = false, features = [
+    "esp32",
+    "uart",
+] }
