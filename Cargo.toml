@@ -4,7 +4,6 @@ members = [
     "vm-core",
     "vm-host",
     "vm-native",
-    "vm-pico",
     "vm-esp32",
     "vm-host-bench",
     "vm-esp32-bench",

@@ -3,6 +3,8 @@
 
 #[cfg(not(target_arch = "xtensa"))]
 use core::cell::RefCell;
+#[cfg(not(target_arch = "xtensa"))]
+use std::{env, fs};
 
 #[cfg(target_arch = "xtensa")]
 use core::cell::RefCell;
@@ -22,7 +24,9 @@ use vm_core::{Host, VmFlags, VM};
 #[cfg(not(target_arch = "xtensa"))]
 use vm_native::GpioController;
 
+#[cfg(target_arch = "xtensa")]
 const LED_PIN: u8 = 4; // Using GPIO4 for external LED
+#[cfg(target_arch = "xtensa")]
 const DEMO_PROGRAM: &[u8] = &[
     0x01, LED_PIN, // PUSH 4 (LED pin = GPIO4)
     0x50, 10, // CALL_NATIVE: LED ON (id=10)
@@ -165,12 +169,12 @@ fn run_program() -> ! {
 }
 
 #[cfg(not(target_arch = "xtensa"))]
-fn run_program() {
+fn run_program(bytecode: &[u8]) {
     let host = Esp32Host {
         gpio: RefCell::new(GpioController::new()),
     };
 
-    let mut vm = VM::new(DEMO_PROGRAM, host);
+    let mut vm = VM::new(bytecode, host);
     vm.run();
 }
 
@@ -182,5 +186,39 @@ fn main() -> ! {
 
 #[cfg(not(target_arch = "xtensa"))]
 fn main() {
-    run_program();
+    let args: Vec<String> = env::args().collect();
+
+    if args.len() < 2 {
+        eprintln!("Usage: cargo run -- <file_path>");
+        return;
+    }
+
+    let contents = fs::read_to_string(&args[1]).expect("Failed to read bytecode file");
+
+    let bytecode: Vec<u8> = contents
+        .lines()
+        .flat_map(|line| {
+            let cleaned = line.split(';').next().unwrap_or(line).trim();
+            if cleaned.is_empty() {
+                return Vec::new();
+            }
+            cleaned
+                .split(',')
+                .filter_map(|part| {
+                    let trimmed = part.trim();
+                    if trimmed.is_empty() {
+                        return None;
+                    }
+                    if trimmed.starts_with("0x") {
+                        let hex_str = trimmed.trim_start_matches("0x");
+                        u8::from_str_radix(hex_str, 16).ok()
+                    } else {
+                        trimmed.parse::<u8>().ok()
+                    }
+                })
+                .collect::<Vec<u8>>()
+        })
+        .collect();
+
+    run_program(&bytecode);
 }
