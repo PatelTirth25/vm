@@ -5,6 +5,7 @@ pub struct VmFlags {
     pub invalid_opcode: bool,
     pub memory_oob: bool,
     pub invalid_jump: bool,
+    pub heap_oob: bool,
     pub halted: bool,
 }
 
@@ -16,6 +17,7 @@ impl VmFlags {
             invalid_opcode: false,
             memory_oob: false,
             invalid_jump: false,
+            heap_oob: false,
             halted: false,
         }
     }
@@ -26,5 +28,6 @@ impl VmFlags {
             || self.invalid_opcode
             || self.memory_oob
             || self.invalid_jump
+            || self.heap_oob
     }
 }

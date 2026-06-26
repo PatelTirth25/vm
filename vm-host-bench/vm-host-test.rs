@@ -11,7 +11,7 @@ struct BenchHost;
 
 impl Host for BenchHost {
     fn print(&self, _value: i32) {}
-    fn native_call(&self, _id: u8, _arg: i32) -> i32 { 0 }
+    fn native_call(&self, _id: u8, _args: &[i32]) -> i32 { 0 }
     fn report_flags(&self, _flags: VmFlags) {}
 }
 

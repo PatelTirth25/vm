@@ -4,6 +4,8 @@
 #[cfg(not(target_arch = "xtensa"))]
 use core::cell::RefCell;
 #[cfg(not(target_arch = "xtensa"))]
+use std::io::{self, Write};
+#[cfg(not(target_arch = "xtensa"))]
 use std::{env, fs};
 
 #[cfg(target_arch = "xtensa")]
@@ -46,10 +48,16 @@ struct Esp32Host {
 
 #[cfg(not(target_arch = "xtensa"))]
 impl Host for Esp32Host {
-    fn print(&self, _value: i32) {}
+    fn print(&self, value: i32) {
+        let _ = writeln!(io::stdout(), "VM OUTPUT = {}", value);
+    }
 
-    fn native_call(&self, id: u8, arg: i32) -> i32 {
-        let pin = arg as u8;
+    fn print_char(&self, c: u8) {
+        let _ = write!(io::stdout(), "{}", c as char);
+    }
+
+    fn native_call(&self, id: u8, args: &[i32]) -> i32 {
+        let pin = args.first().copied().unwrap_or(0) as u8;
         match id {
             10 => {
                 let _ = self.gpio.borrow_mut().high(pin);
@@ -69,7 +77,18 @@ impl Host for Esp32Host {
     }
 
     fn report_flags(&self, flags: VmFlags) {
-        if flags.any_error() {}
+        if flags.any_error() {
+            let _ = writeln!(
+                io::stderr(),
+                "VM ERROR FLAGS: overflow={} underflow={} invalid_opcode={} memory_oob={} invalid_jump={} heap_oob={}",
+                flags.stack_overflow,
+                flags.stack_underflow,
+                flags.invalid_opcode,
+                flags.memory_oob,
+                flags.invalid_jump,
+                flags.heap_oob,
+            );
+        }
     }
 }
 
@@ -85,8 +104,8 @@ impl Host for Esp32XtensaHost<'_, '_, '_> {
         println!("VM OUTPUT = {}", value);
     }
 
-    fn native_call(&self, id: u8, arg: i32) -> i32 {
-        let pin = arg as u8;
+    fn native_call(&self, id: u8, args: &[i32]) -> i32 {
+        let pin = args.first().copied().unwrap_or(0) as u8;
         if pin != LED_PIN && id != 20 {
             println!(
                 "Ignoring GPIO{} request; demo host only exposes GPIO{}",
@@ -113,7 +132,7 @@ impl Host for Esp32XtensaHost<'_, '_, '_> {
                 0
             }
             20 => {
-                // delay_ms
+                let arg = args.first().copied().unwrap_or(0);
                 println!("[NATIVE] delay {}ms", arg);
                 self.delay.delay_millis(arg as u32);
                 0

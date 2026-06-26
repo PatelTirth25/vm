@@ -14,7 +14,7 @@ impl Host for HostUart {
         // write to UART / RTT / semihosting
     }
 
-    fn native_call(&self, _id: u8, _arg: i32) -> i32 {
+    fn native_call(&self, _id: u8, _args: &[i32]) -> i32 {
         0
     }
 
@@ -30,39 +30,52 @@ impl Host for HostStd {
         println!("VM OUTPUT = {}", value);
     }
 
-    fn native_call(&self, id: u8, arg: i32) -> i32 {
+    fn print_char(&self, c: u8) {
+        print!("{}", c as char);
+    }
+
+    fn native_call(&self, id: u8, args: &[i32]) -> i32 {
         match id {
             0 => {
-                println!("NATIVE PRINT: {}", arg);
+                print!("NATIVE PRINT:");
+                for a in args { print!(" {}", a); }
+                println!();
                 0
             }
             1 => {
+                let arg = args.first().copied().unwrap_or(0);
                 let result = arg * 2;
                 println!("NATIVE DOUBLE: {} -> {}", arg, result);
                 result
             }
             2 => {
+                let arg = args.first().copied().unwrap_or(0);
                 let result = arg * arg;
                 println!("NATIVE SQUARE: {} -> {}", arg, result);
                 result
             }
+            3 => {
+                let sum: i32 = args.iter().sum();
+                println!("NATIVE SUM {:?} = {}", args, sum);
+                sum
+            }
             10 => {
-                let pin = arg as u8;
+                let pin = args.first().copied().unwrap_or(0) as u8;
                 let mut gpio = self.gpio.borrow_mut();
                 gpio.high(pin)
             }
             11 => {
-                let pin = arg as u8;
+                let pin = args.first().copied().unwrap_or(0) as u8;
                 let mut gpio = self.gpio.borrow_mut();
                 gpio.low(pin)
             }
             12 => {
-                let pin = arg as u8;
+                let pin = args.first().copied().unwrap_or(0) as u8;
                 let gpio = self.gpio.borrow();
                 gpio.read(pin)
             }
             13 => {
-                let pin = arg as u8;
+                let pin = args.first().copied().unwrap_or(0) as u8;
                 let mut gpio = self.gpio.borrow_mut();
                 gpio.toggle(pin)
             }
